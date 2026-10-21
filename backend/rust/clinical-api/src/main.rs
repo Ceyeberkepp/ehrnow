@@ -1,3 +1,4 @@
+mod allergies;
 mod problems;
 mod scheduling;
 mod encounters;
@@ -88,6 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .merge(encounters::routes())
         .merge(scheduling::routes())
         .merge(problems::routes())
+        .merge(allergies::routes())
         .layer(cors).with_state(state);
     let addr: SocketAddr = "127.0.0.1:8080".parse()?;
     println!("EHRNow DEVELOPMENT API on {addr}; synthetic records only");
