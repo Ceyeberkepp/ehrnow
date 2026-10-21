@@ -1,3 +1,4 @@
+mod encounters;
 use axum::{extract::{Path, State}, http::{header, HeaderMap, StatusCode}, routing::{get, post}, Json, Router};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
@@ -86,6 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/dev/bootstrap", post(bootstrap))
         .route("/api/v1/patients", get(list_patients).post(create_patient))
         .route("/api/v1/patients/{id}", get(get_patient))
+        .merge(encounters::routes())
         .layer(cors).with_state(state);
     let addr: SocketAddr = "127.0.0.1:8080".parse()?;
     println!("EHRNow DEVELOPMENT API on {addr}; synthetic records only");
