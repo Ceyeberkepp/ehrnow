@@ -6,8 +6,8 @@
 - [x] React clinician shell with registry forms
 - [x] PostgreSQL migration and loopback-only Docker development
 - [x] Security gates and architecture
-- [ ] CI workflow verification in GitHub Actions
-- [ ] Test coverage with disposable synthetic database
+- [x] CI workflow verified on audit-integrity milestone
+- [x] Initial audit integrity tests with disposable synthetic database (full integration coverage still needed)
 
 ## Phase 1 — identity and defensible tenant isolation
 - [ ] OIDC / PKCE / MFA, clinician identities
@@ -32,7 +32,7 @@
 - [ ] Specialty packs including pediatrics, cardiology and behavioral health
 
 ## Phase 5 — administration and patient services
-- [ ] Scheduling, practice management, claims, revenue cycle, payments
+- [ ] Scheduling, practice management, claims, revenue cycle, payments (appointment/practitioner/location schema committed; UI and APIs still pending)
 - [ ] Patient portal, messaging, proxy permissions, telehealth
 
 ## Phase 6 — federation and analytics
