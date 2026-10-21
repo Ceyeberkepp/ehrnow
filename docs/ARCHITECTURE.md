@@ -10,6 +10,15 @@
 6. HL7 FHIR R4, US Core, SMART on FHIR, HL7 v2, C-CDA, DICOM and X12 adapters each need a conformance and security test suite before claiming support.
 7. Treat medication safety, wrong-patient errors and alerting as safety-critical, with explicit human review and clinical hazard management.
 
+## Mandatory frontend technology policy
+
+- **React + TypeScript (TSX)** is required for every EHRNow web interface: clinician, nursing, emergency, admin, billing, lab, pharmacy and patient portal.
+- Use reusable React components, client-side routing, typed API clients, accessible controls and a shared design system.
+- Do **not** implement product screens using standalone HTML pages, server-rendered HTML templates, raw HTML strings or direct DOM manipulation. Do not add static HTML mockups as substitutes for working React interfaces.
+- A minimal `index.html` entry shell is permitted because Vite/browser applications need a mounting document; it contains no clinical UI or page logic.
+- Prefer React state and component composition. Never use `dangerouslySetInnerHTML` with untrusted content. No PHI in localStorage or browser logs.
+- All React screens must connect to authenticated, authorized backend APIs; frontend checks cannot replace backend enforcement.
+
 ## Target domains
 
 Patient identity/MPI, longitudinal chart, encounters, allergies, medications, orders/results, diagnostics, emergency, admissions/transfers/discharges, nursing/eMAR, surgery, pharmacy, imaging, schedules, billing, claims, patient portal, specialty extensions, HIE/TEFCA, clinical analytics, population health, governance.
