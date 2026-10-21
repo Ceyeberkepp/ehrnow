@@ -1,0 +1,19 @@
+import {useState,type FormEvent} from 'react';
+type Patient={id:string;given_name:string;family_name:string;mrn:string};
+type Resource={id:string;display_name:string};
+type Appointment={id:string;patient_id:string;practitioner_id:string;location_id:string;starts_at:string;ends_at:string;status:string;reason:string};
+type Props={patients:Patient[];request:(path:string,method?:string,body?:unknown)=>Promise<any>};
+export default function Scheduling({patients,request}:Props){
+ const [resources,setResources]=useState<{practitioners:Resource[];locations:Resource[]}>({practitioners:[],locations:[]});
+ const [items,setItems]=useState<Appointment[]>([]);const [patient,setPatient]=useState('');const [provider,setProvider]=useState('');const [location,setLocation]=useState('');const [start,setStart]=useState('');const [end,setEnd]=useState('');const [reason,setReason]=useState('');const [error,setError]=useState('');const [busy,setBusy]=useState(false);
+ async function refresh(){try{const [r,a]=await Promise.all([request('/api/v1/scheduling/resources'),request('/api/v1/appointments')]);setResources(r);setItems(a);setProvider(x=>x||r.practitioners[0]?.id||'');setLocation(x=>x||r.locations[0]?.id||'');setError('')}catch(e){setError(String(e))}}
+ async function setup(){try{await request('/dev/scheduling/seed','POST');await refresh()}catch(e){setError(String(e))}}
+ async function save(e:FormEvent){e.preventDefault();setBusy(true);setError('');try{await request('/api/v1/appointments','POST',{patient_id:patient,practitioner_id:provider,location_id:location,starts_at:new Date(start).toISOString(),ends_at:new Date(end).toISOString(),reason});setReason('');await refresh()}catch(e){setError(String(e))}finally{setBusy(false)}}
+ return <section className="panel"><h2>Scheduling — development sandbox</h2><p>Fictional patients, practitioners and resources only. No real appointments or clinical use.</p><div className="actions"><button type="button" onClick={()=>void refresh()}>Refresh schedule</button><button type="button" className="secondary" onClick={()=>void setup()}>Set up fictional resources</button></div>
+ <form className="form" onSubmit={save}><label>Patient<select required value={patient} onChange={e=>setPatient(e.target.value)}><option value="">Select fictional patient</option>{patients.map(p=><option key={p.id} value={p.id}>{p.family_name}, {p.given_name} — {p.mrn}</option>)}</select></label>
+ <label>Practitioner<select required value={provider} onChange={e=>setProvider(e.target.value)}><option value="">Select</option>{resources.practitioners.map(x=><option value={x.id} key={x.id}>{x.display_name}</option>)}</select></label>
+ <label>Location<select required value={location} onChange={e=>setLocation(e.target.value)}><option value="">Select</option>{resources.locations.map(x=><option key={x.id} value={x.id}>{x.display_name}</option>)}</select></label>
+ <label>Start<input required type="datetime-local" value={start} onChange={e=>setStart(e.target.value)}/></label><label>End<input required type="datetime-local" value={end} onChange={e=>setEnd(e.target.value)}/></label><label>Reason<input required maxLength={500} value={reason} onChange={e=>setReason(e.target.value)}/></label>
+ <div className="actions"><button type="submit" disabled={busy||!provider||!location}>Book synthetic appointment</button></div></form>
+ <h2 className="section-heading">Appointments</h2><div className="table-wrap"><table><thead><tr><th>Patient</th><th>Start</th><th>End</th><th>Reason</th><th>Status</th></tr></thead><tbody>{items.map(a=><tr key={a.id}><td>{patients.find(p=>p.id===a.patient_id)?.family_name||a.patient_id.slice(0,8)}</td><td>{new Date(a.starts_at).toLocaleString()}</td><td>{new Date(a.ends_at).toLocaleString()}</td><td>{a.reason}</td><td>{a.status}</td></tr>)}</tbody></table>{!items.length&&<p>No synthetic appointments loaded.</p>}</div>{error&&<p role="alert" className="error">{error}</p>}</section>
+}
