@@ -1,6 +1,6 @@
 # EHRNow
 
-**Proprietary EHR software — all rights reserved.** No open-source license is granted. Repository visibility must be set to **Private** before proprietary development continues.
+**PROPRIETARY SOFTWARE — ALL RIGHTS RESERVED. NOT OPEN SOURCE.**\n\n**NO USE WITHOUT PERMISSION:** No person or organization may use, copy, modify, distribute, host, deploy, or commercialize EHRNow without prior express written permission from the copyright owner. Public access to this repository does **not** grant any license. See the [LICENSE](LICENSE) file.\n\n**Repository security:** Change GitHub repository visibility to **Private** before further proprietary development.
 
 This repository is an **early engineering foundation, not a clinical system**. It must not store real patient data, be exposed to the Internet, or be used for clinical decisions. Only fictional test data is permitted until security and clinical safety controls have been independently verified.
 
