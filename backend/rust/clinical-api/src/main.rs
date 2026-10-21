@@ -24,19 +24,15 @@ fn authorize(headers: &HeaderMap, token: &str) -> Result<(), ApiError> {
 }
 fn demo_tenant(headers: &HeaderMap) -> Result<Uuid, ApiError> {
     let id = headers.get("x-ehr-tenant-id").and_then(|v| v.to_str().ok()).ok_or_else(|| err(StatusCode::BAD_REQUEST, "tenant header required"))?;
-    Uuid::parse_str(id).map_err(|_| err(StatusCode::BAD_REQUEST, "invalid tenant ID"))
+    { let parsed = Uuid::parse_str(id).map_err(|_| err(StatusCode::BAD_REQUEST, "invalid tenant ID"))?; if parsed != Uuid::parse_str("00000000-0000-4000-8000-000000000001").expect("static UUID") { return Err(err(StatusCode::FORBIDDEN,"development tenant only")); } Ok(parsed) }
 }
 async fn health() -> &'static str { "ok" }
 async fn bootstrap(State(s): State<AppState>, headers: HeaderMap) -> Result<Json<serde_json::Value>, ApiError> {
     authorize(&headers, &s.token)?;
-    let name = "Synthetic Test Organization";
-    let id: Uuid = sqlx::query_scalar("SELECT id FROM tenants WHERE name = $1 ORDER BY created_at LIMIT 1")
-        .bind(name).fetch_optional(&s.db).await.map_err(internal)?
-        .unwrap_or_else(Uuid::nil);
-    let id = if id.is_nil() {
-        sqlx::query_scalar("INSERT INTO tenants(name) VALUES ($1) RETURNING id").bind(name)
-            .fetch_one(&s.db).await.map_err(internal)?
-    } else { id };
+    let id = Uuid::parse_str("00000000-0000-4000-8000-000000000001").expect("static UUID");
+    let exists: Option<Uuid> = sqlx::query_scalar("SELECT id FROM tenants WHERE id = $1")
+        .bind(id).fetch_optional(&s.db).await.map_err(internal)?;
+    if exists.is_none() { return Err(err(StatusCode::SERVICE_UNAVAILABLE, "development tenant missing")); }
     Ok(Json(serde_json::json!({"tenant_id": id})))
 }
 fn internal(_: sqlx::Error) -> ApiError { err(StatusCode::INTERNAL_SERVER_ERROR, "database operation failed") }
