@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ehrdev
+      POSTGRES_PASSWORD: local_only_change_me
+      POSTGRES_DB: ehrnow
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ehrdev -d ehrnow"]
+      interval: 5s
+      retries: 10
+  mongodb:
+    profiles: ["extended"]
+    image: mongo:8
+    command: ["mongod", "--bind_ip_all", "--auth"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ehrdev
+      MONGO_INITDB_ROOT_PASSWORD: local_only_change_me
+    ports: ["127.0.0.1:27017:27017"]
+    volumes: [mongodata:/data/db]
+  neo4j:
+    profiles: ["extended"]
+    image: neo4j:5
+    environment:
+      NEO4J_AUTH: neo4j/local_only_change_me
+    ports: ["127.0.0.1:7474:7474","127.0.0.1:7687:7687"]
+    volumes: [neo4jdata:/data]
+  nats:
+    profiles: ["extended"]
+    image: nats:2
+    command: ["-js"]
+    ports: ["127.0.0.1:4222:4222"]
+  redis:
+    profiles: ["extended"]
+    image: redis:7
+    command: ["redis-server", "--requirepass", "local_only_change_me"]
+    ports: ["127.0.0.1:6379:6379"]
+volumes:
+  pgdata:
+  mongodata:
+  neo4jdata:
