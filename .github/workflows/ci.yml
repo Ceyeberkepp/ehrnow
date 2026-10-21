@@ -41,3 +41,30 @@ jobs:
           node-version: '22'
       - run: npm install
       - run: npm run build
+
+  database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ehrdev
+          POSTGRES_PASSWORD: ci_disposable_only
+          POSTGRES_DB: ehrnow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ehrdev -d ehrnow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: ci_disposable_only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply migrations and audit integrity checks
+        run: |
+          for migration in backend/rust/clinical-api/migrations/*.sql; do
+            psql -h 127.0.0.1 -U ehrdev -d ehrnow -v ON_ERROR_STOP=1 -f "$migration"
+          done
+          psql -h 127.0.0.1 -U ehrdev -d ehrnow -v ON_ERROR_STOP=1 -f database/postgres/tests/audit_integrity.sql
