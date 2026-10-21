@@ -67,4 +67,6 @@ jobs:
           for migration in backend/rust/clinical-api/migrations/*.sql; do
             psql -h 127.0.0.1 -U ehrdev -d ehrnow -v ON_ERROR_STOP=1 -f "$migration"
           done
-          psql -h 127.0.0.1 -U ehrdev -d ehrnow -v ON_ERROR_STOP=1 -f database/postgres/tests/audit_integrity.sql
+          for testcase in database/postgres/tests/*.sql; do
+            psql -h 127.0.0.1 -U ehrdev -d ehrnow -v ON_ERROR_STOP=1 -f "$testcase"
+          done
