@@ -95,7 +95,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .merge(developer::routes())
         .merge(forms::routes())
         .layer(cors).with_state(state);
-    let addr: SocketAddr = "127.0.0.1:8080".parse()?;
+    let addr: SocketAddr = env::var("EHR_BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:8080".to_string()).parse()?;
     println!("EHRNow DEVELOPMENT API on {addr}; synthetic records only");
     axum::serve(tokio::net::TcpListener::bind(addr).await?, app).await?;
     Ok(())
