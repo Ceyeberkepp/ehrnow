@@ -2,11 +2,14 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 umask 077
-command -v docker >/dev/null || { echo "Docker Engine + Compose v2 is required on Linux." >&2; exit 1; }
-docker compose version >/dev/null || { echo "Docker Compose v2 not found." >&2; exit 1; }
+if ! command -v docker >/dev/null || ! docker compose version >/dev/null 2>&1; then
+  echo "Docker Engine/Compose missing. Installing automatically on supported Debian 13..."
+  bash scripts/bootstrap-debian-docker.sh
+fi
+docker compose version >/dev/null || { echo "Docker Compose v2 unavailable." >&2; exit 1; }
 command -v openssl >/dev/null || { echo "OpenSSL is required to generate credentials." >&2; exit 1; }
 command -v curl >/dev/null || { echo "curl is required for health verification." >&2; exit 1; }
-docker info >/dev/null || { echo "Docker daemon not reachable by this user." >&2; exit 1; }
+docker info >/dev/null || { echo "Docker daemon not reachable. Check systemctl status docker and LXC nesting restrictions." >&2; exit 1; }
 if [ -e .env.private ]; then
   echo "Keeping existing .env.private credentials."
   [ "$(stat -c %a .env.private)" = "600" ] || chmod 600 .env.private
