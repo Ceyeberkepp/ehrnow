@@ -2,6 +2,7 @@ import ClinicalOverview from './ClinicalOverview';
 import PatientSummary from './PatientSummary';
 import AdminSecurity from './AdminSecurity';
 import StaffDirectory from './StaffDirectory';
+import Departments from './Departments';
 import DeveloperCenter from './DeveloperCenter';
 import ReportedAllergies from './ReportedAllergies';
 import MedicationHistory from './MedicationHistory';
@@ -60,7 +61,7 @@ function App(){
  useEffect(()=>{if(!connected)return;const id=setInterval(()=>{void refresh()},30000);return()=>clearInterval(id)},[connected,token,tenant]);
  const filtered=patients.filter(p=>(p.given_name+' '+p.family_name+' '+p.mrn).toLowerCase().includes(search.toLowerCase()));
  return <div className="shell"><aside className="sidebar"><div className="brand"><HeartPulse size={27}/><strong>EHR<span>Now</span></strong></div><p className="side-label">CLINICAL WORKSPACE</p>
- {[['Overview',LayoutDashboard,'overview'],['Patients',Users,'patients'],['Encounters',Activity,'encounters'],['Problem List',Activity,'problems'],['Reported Allergies',Activity,'allergies'],['Medication History',Activity,'medications'],['Scheduling',Activity,'scheduling'],['Infrastructure',Database,'infrastructure'],['Staff Directory',Users,'staff'],['Developer Center',Shield,'developer'],['Account Security',Shield,'account-security']].filter(([, ,key])=>((key==='account-security'||key==='staff')||moduleCatalog?.modules.find(m=>m.key===key)?.enabled)).map(([name,Icon])=><button key={name as string} className={view===name?'nav active':'nav'} onClick={()=>setView(name as string)}><Icon size={18}/>{name as string}</button>)}
+ {[['Overview',LayoutDashboard,'overview'],['Patients',Users,'patients'],['Encounters',Activity,'encounters'],['Problem List',Activity,'problems'],['Reported Allergies',Activity,'allergies'],['Medication History',Activity,'medications'],['Scheduling',Activity,'scheduling'],['Infrastructure',Database,'infrastructure'],['Departments',Users,'departments'],['Staff Directory',Users,'staff'],['Developer Center',Shield,'developer'],['Account Security',Shield,'account-security']].filter(([, ,key])=>((key==='account-security'||key==='staff'||key==='departments')||moduleCatalog?.modules.find(m=>m.key===key)?.enabled)).map(([name,Icon])=><button key={name as string} className={view===name?'nav active':'nav'} onClick={()=>setView(name as string)}><Icon size={18}/>{name as string}</button>)}
  <div className="sidebar-foot"><Shield size={17}/>Development environment<br/>Synthetic records only</div></aside>
  <main className="main"><header><div><small>EHRNow / {view}</small><h1>{view==='Developer Center'?'Developer Center':view==='Reported Allergies'?'Reported Allergies':view==='Problem List'?'Problem List':view==='Scheduling'?'Scheduling':view==='Encounters'?'Encounters & Notes':view==='Patient Summary'?'Patient Summary':view==='Patients'?'Patient Registry':view==='Overview'?'Clinical Overview':view==='New Patient'?'Register Patient':'Platform Status'}</h1></div><div className="header-right"><span className="status"><span className="dot"/>{connected?'Connected to local API':'Not connected'}</span>{connected&&<button className="secondary" onClick={()=>void logout()}>Sign out</button>}<span className="avatar">EN</span></div></header>
  <div className="warning"><Shield size={17}/> Developer preview — DO NOT enter real patient data or use for clinical care.</div>
@@ -69,6 +70,7 @@ function App(){
  {[['mrn','Medical record number'],['given_name','Given name'],['family_name','Family name'],['birth_date','Birth date']].map(([key,label])=><label key={key}>{label}<input required maxLength={120} type={key==='birth_date'?'date':'text'} value={form[key as keyof typeof form]} onChange={e=>setForm({...form,[key]:e.target.value})}/></label>)}
  <div className="actions"><button type="button" className="secondary" onClick={()=>setView('Patients')}>Cancel</button><button disabled={busy} type="submit">Create record</button></div></form></section>:
  view==='Account Security'?<AdminSecurity request={call} onSignedOut={()=>{setToken('');setTenant('');setPatients([]);setModuleCatalog(null);setView('Overview')}}/>:
+ view==='Departments'?<Departments request={call}/>:
  view==='Staff Directory'?<StaffDirectory request={call}/>:
  view==='Developer Center'?<DeveloperCenter request={call} onCatalog={setModuleCatalog}/>:
  view==='Encounters'?<EncounterWorkspace patients={patients} request={call}/>:
