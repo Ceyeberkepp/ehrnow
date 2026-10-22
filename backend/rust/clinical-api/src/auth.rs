@@ -36,7 +36,10 @@ fn validate(body:&Credentials)->Result<(),ApiError>{
  if body.password.len()<14||body.password.len()>256{return Err(err(StatusCode::BAD_REQUEST,"password must contain 14-256 characters"))}
  Ok(())
 }
-async fn setup(State(s):State<AppState>,Json(body):Json<Credentials>)->Result<Json<Session>,ApiError>{
+async fn setup(State(s):State<AppState>,headers:HeaderMap,Json(body):Json<Credentials>)->Result<Json<Session>,ApiError>{
+ let expected=std::env::var("EHR_SETUP_KEY").map_err(|_|err(StatusCode::SERVICE_UNAVAILABLE,"setup not configured"))?;
+ let supplied=headers.get("x-ehr-setup-key").and_then(|v|v.to_str().ok()).unwrap_or("");
+ if expected.len()<32 || supplied.len()!=expected.len() || !bool::from(subtle::ConstantTimeEq::ct_eq(supplied.as_bytes(),expected.as_bytes())) {return Err(err(StatusCode::FORBIDDEN,"invalid installation setup key"))}
  validate(&body)?;
  let mut tx=s.db.begin().await.map_err(internal)?;
  sqlx::query("SELECT pg_advisory_xact_lock(49318411)").execute(&mut *tx).await.map_err(internal)?;
