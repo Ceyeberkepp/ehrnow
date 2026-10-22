@@ -50,7 +50,7 @@ services:
     depends_on:
       - api
     ports:
-      - "127.0.0.1:5173:5173"
+      - "${EHR_WEB_BIND_IP:-127.0.0.1}:5173:5173"
     security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
 volumes:
