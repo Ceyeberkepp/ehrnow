@@ -1,45 +1,73 @@
-# EHRNow — private single-user server installation
+# EHRNow — private, single-user developer deployment
 
-**Development preview with synthetic records ONLY. Not for real patients or clinical decisions.** The development shared token is not a true user login and is insufficient for a patient-facing EHR.
+**Synthetic data only. Not a clinical system, not suitable for PHI or real patient care.**
 
-## Supported host
-A dedicated Linux server or Linux VM with Docker Engine + Compose v2, Rust/Cargo, Node.js/npm, OpenSSL and Git. Run under an ordinary dedicated account with Docker access. A member of the Docker group can administer the host: do not grant that access to untrusted users.
+## Host prerequisites (Linux)
+- Linux server or dedicated Linux VM, at least 4 vCPU, 8 GB RAM recommended, ample free disk.
+- Docker Engine and Docker Compose v2 installed and running.
+- Git, Bash, OpenSSL and curl on the host.
+- Your server's SSH service and an SSH key allowing access for your account.
+- Outbound Internet during first build to fetch PostgreSQL, Rust and Node images and dependencies.
 
-## Install once on the server
-Clone your authorized repo checkout (prefer a PRIVATE GitHub repository), then:
+**You do NOT need to install Rust, Cargo, Node.js, npm or PostgreSQL on the Linux host.** Their dependencies are included in the Docker build images.
+
+## Installation
+
+1. Clone the repository you own, preferably after changing GitHub visibility to **Private**.
+2. From the repository root, run:
+
 ```bash
-cd ehrnow
 bash scripts/install-private.sh
+```
+
+This creates `.env.private` using OpenSSL-generated secrets and permissions 0600. It builds the React and Rust images, provisions a dedicated PostgreSQL container, starts the stack and checks localhost API + web responses. The `ehrnow-private-pgdata` volume persists across restarts. Avoid storing production patient data.
+
+## Starting and stopping
+
+Start the services after a reboot using:
+
+```bash
 bash scripts/run-private.sh
 ```
-The script generates distinct random credentials in `.env.private` (mode 0600); never commit or share it. It uses a dedicated PostgreSQL compose project, stored volume, and port `127.0.0.1:15432`. Existing data in the `ehrnow-private-pgdata` volume is not destroyed on reruns.
 
-Keep the `run-private.sh` session running while using the UI. A controlled restart or reboot requires running that command again; this is not an unattended production service.
+Stop services without deleting test records:
 
-## Connect from your own laptop only
-Establish an SSH connection from your own computer:
 ```bash
-ssh -N -L 5173:127.0.0.1:5173 -L 8080:127.0.0.1:8080 YOUR_LINUX_USER@YOUR_SERVER
+docker compose --env-file .env.private -f compose.private.yml stop
 ```
-Then on that same computer open `http://127.0.0.1:5173`. The React app talks to the forwarded API on `127.0.0.1:8080`. Enter the locally generated `EHR_DEV_TOKEN` from `.env.private` through the UI. Don't paste it into chat, email, tickets or public logs. Only users who can access the server or possess both SSH access and the token can use this development instance; this is not hardened per-user authorization.
 
-If another local service uses ports 5173/8080/15432, resolve the conflict before starting. Do not publish any of these ports using a public reverse proxy, CDN, tunnel, or router port forward.
+Do NOT run `down -v` unless intentionally deleting the test database.
 
-## Security hardening
-- Disable password-based SSH authentication where feasible; use SSH keys (prefer hardware-backed keys) and MFA, plus firewall allowlisting or your VPN.
-- Restrict the server login to yourself and trusted administrators; the Docker socket gives root-equivalent host control.
-- No remote access to PostgreSQL, MongoDB or Neo4j; this private setup launches PostgreSQL only.
-- Set file permissions on the checkout; lock down local shells and backup volumes.
-- Backup the private PostgreSQL volume securely. Do not commit .env.private or use real patient information.
-- The repo may still be PUBLIC on GitHub despite a proprietary LICENSE. Change repository visibility to Private for source confidentiality.
-- Don't interpret this as HIPAA compliance, clinical safety certification, or effective RBAC.
+## Access from your own computer via SSH tunnel
 
-## Stopping
-Terminate the `run-private.sh` terminal session. To stop PostgreSQL:
+From your own computer, use:
+
 ```bash
-docker compose --env-file .env.private -f compose.private.yml stop postgres
+ssh -N -L 5173:127.0.0.1:5173 -L 8080:127.0.0.1:8080 YOUR_USER@YOUR_SERVER_IP
 ```
-Never run `docker compose down -v` unless you explicitly intend to erase the private test database.
 
-## Troubleshooting
-On the server check `curl http://127.0.0.1:8080/health` and Docker status with `docker compose --env-file .env.private -f compose.private.yml ps`. For browser problems check the SSH tunnel and the server Vite output. Check that no external network interfaces are listening on ports 5173, 8080 or 15432.
+Open `http://127.0.0.1:5173` on your computer. The React app calls the API at `http://127.0.0.1:8080` through the same tunnel. Enter the developer token from `.env.private` on the server (never paste it into chat).
+
+Compose only publishes React and Rust ports on the **server loopback interface**. PostgreSQL is accessible to containers on the dedicated Compose network, not host TCP. Do not configure router forwards, public reverse proxies, Cloudflare tunnels, or public access.
+
+## How to check installation
+
+```bash
+docker compose --env-file .env.private -f compose.private.yml ps
+curl -fsS http://127.0.0.1:8080/health
+curl -fsS http://127.0.0.1:5173/ >/dev/null
+```
+
+For errors:
+
+```bash
+docker compose --env-file .env.private -f compose.private.yml logs --tail 100 api web postgres
+```
+
+If the build fails on first installation, inspect logs and verify the server's RAM, free space, Docker connectivity and outbound network access. Script reruns preserve the generated credentials and database volume.
+
+## Limitations
+
+This is a **private sandbox** deployment, not complete user authentication. Any person holding the shared developer token and server access could operate the sandbox. Production OIDC/MFA, role enforcement, patient isolation, audit validation and clinical safety reviews are not ready. Use Linux SSH key access and server firewall/VPN controls.
+
+Repository source confidentiality requires switching the currently public GitHub repository to Private; a proprietary license alone doesn't hide source files.
