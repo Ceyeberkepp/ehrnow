@@ -1,3 +1,4 @@
+import DeveloperCenter from './DeveloperCenter';
 import ReportedAllergies from './ReportedAllergies';
 import ProblemList from './ProblemList';
 import Scheduling from './Scheduling';
@@ -14,6 +15,7 @@ function App(){
  const [tenant,setTenant]=useState('');
  const [patients,setPatients]=useState<Patient[]>([]);
  const [view,setView]=useState('Patients');
+ const [moduleCatalog,setModuleCatalog]=useState<{modules:{key:string;label:string;enabled:boolean}[]} | null>(null);
  const [search,setSearch]=useState('');
  const [error,setError]=useState('');
  const [busy,setBusy]=useState(false);
@@ -27,7 +29,7 @@ function App(){
  async function connect(){
   setBusy(true);setError('');
   try {const result=await call('/dev/bootstrap','POST');setTenant(result.tenant_id);
-   const list=await call('/api/v1/patients','GET',undefined,result.tenant_id);setPatients(list);
+   const list=await call('/api/v1/patients','GET',undefined,result.tenant_id);setPatients(list);const catalog=await call('/dev/admin/catalog','GET',undefined,result.tenant_id);setModuleCatalog(catalog);
   } catch(e){setError(String(e));} finally{setBusy(false);}
  }
  async function refresh(){try{setPatients(await call('/api/v1/patients'));setError('');}catch(e){setError(String(e));}}
@@ -38,14 +40,15 @@ function App(){
  useEffect(()=>{if(!connected)return;const id=setInterval(()=>{void refresh()},30000);return()=>clearInterval(id)},[connected,token,tenant]);
  const filtered=patients.filter(p=>(p.given_name+' '+p.family_name+' '+p.mrn).toLowerCase().includes(search.toLowerCase()));
  return <div className="shell"><aside className="sidebar"><div className="brand"><HeartPulse size={27}/><strong>EHR<span>Now</span></strong></div><p className="side-label">CLINICAL WORKSPACE</p>
- {[['Overview',LayoutDashboard],['Patients',Users],['Encounters',Activity],['Problem List',Activity],['Reported Allergies',Activity],['Scheduling',Activity],['Infrastructure',Database]].map(([name,Icon])=><button key={name as string} className={view===name?'nav active':'nav'} onClick={()=>setView(name as string)}><Icon size={18}/>{name as string}</button>)}
+ {[['Overview',LayoutDashboard,'overview'],['Patients',Users,'patients'],['Encounters',Activity,'encounters'],['Problem List',Activity,'problems'],['Reported Allergies',Activity,'allergies'],['Scheduling',Activity,'scheduling'],['Infrastructure',Database,'infrastructure'],['Developer Center',Shield,'developer']].filter(([, ,key])=>moduleCatalog?.modules.find(m=>m.key===key)?.enabled).map(([name,Icon])=><button key={name as string} className={view===name?'nav active':'nav'} onClick={()=>setView(name as string)}><Icon size={18}/>{name as string}</button>)}
  <div className="sidebar-foot"><Shield size={17}/>Development environment<br/>Synthetic records only</div></aside>
- <main className="main"><header><div><small>EHRNow / {view}</small><h1>{view==='Reported Allergies'?'Reported Allergies':view==='Problem List'?'Problem List':view==='Scheduling'?'Scheduling':view==='Encounters'?'Encounters & Notes':view==='Patients'?'Patient Registry':view==='Overview'?'Clinical Overview':view==='New Patient'?'Register Patient':'Platform Status'}</h1></div><div className="header-right"><span className="status"><span className="dot"/>{connected?'Connected to local API':'Not connected'}</span><span className="avatar">EN</span></div></header>
+ <main className="main"><header><div><small>EHRNow / {view}</small><h1>{view==='Developer Center'?'Developer Center':view==='Reported Allergies'?'Reported Allergies':view==='Problem List'?'Problem List':view==='Scheduling'?'Scheduling':view==='Encounters'?'Encounters & Notes':view==='Patients'?'Patient Registry':view==='Overview'?'Clinical Overview':view==='New Patient'?'Register Patient':'Platform Status'}</h1></div><div className="header-right"><span className="status"><span className="dot"/>{connected?'Connected to local API':'Not connected'}</span><span className="avatar">EN</span></div></header>
  <div className="warning"><Shield size={17}/> Developer preview — DO NOT enter real patient data or use for clinical care.</div>
  {!connected?<section className="panel connect"><Activity size={30}/><h2>Connect to local development API</h2><p>Enter the development token from your local .env file. This token stays in page memory and is not saved.</p><input type="password" autoComplete="off" aria-label="Development token" placeholder="Development token (32+ characters)" value={token} onChange={e=>setToken(e.target.value)}/><button disabled={busy||token.length<32} onClick={connect}>Connect</button></section>:
  view==='New Patient'?<section className="panel"><h2>New synthetic patient</h2><form onSubmit={save} className="form">
  {[['mrn','Medical record number'],['given_name','Given name'],['family_name','Family name'],['birth_date','Birth date']].map(([key,label])=><label key={key}>{label}<input required maxLength={120} type={key==='birth_date'?'date':'text'} value={form[key as keyof typeof form]} onChange={e=>setForm({...form,[key]:e.target.value})}/></label>)}
  <div className="actions"><button type="button" className="secondary" onClick={()=>setView('Patients')}>Cancel</button><button disabled={busy} type="submit">Create record</button></div></form></section>:
+ view==='Developer Center'?<DeveloperCenter request={call} onCatalog={setModuleCatalog}/>:
  view==='Encounters'?<EncounterWorkspace patients={patients} request={call}/>:
  view==='Scheduling'?<Scheduling patients={patients} request={call}/>:
  view==='Problem List'?<ProblemList patients={patients} request={call}/>:
