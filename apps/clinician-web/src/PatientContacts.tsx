@@ -1,0 +1,10 @@
+import {useEffect,useState,type FormEvent} from 'react';
+type Item={id:string;contact_name:string;relationship:string;phone:string};
+type Props={patientId:string;request:(path:string,method?:string,body?:unknown)=>Promise<any>};
+export default function PatientContacts({patientId,request}:Props){
+ const [items,setItems]=useState<Item[]>([]),[name,setName]=useState(''),[relationship,setRelationship]=useState(''),[phone,setPhone]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ async function refresh(){try{setItems(await request('/api/v1/patients/'+patientId+'/contacts'));setError('')}catch(e){setError(String(e))}}
+ useEffect(()=>{void refresh()},[patientId]);
+ async function save(e:FormEvent){e.preventDefault();setBusy(true);try{await request('/api/v1/patients/'+patientId+'/contacts','POST',{contact_name:name,relationship,phone});setName('');setRelationship('');setPhone('');await refresh()}catch(e){setError(String(e))}finally{setBusy(false)}}
+ return <section className="panel"><h2>Patient Contacts (Synthetic)</h2><p>Unverified fictional contact entries. This is not a clinical alert or emergency contact notification service.</p><form onSubmit={save} className="form"><label>Contact name<input required minLength={2} maxLength={150} value={name} onChange={e=>setName(e.target.value)}/></label><label>Relationship<input required minLength={2} maxLength={100} value={relationship} onChange={e=>setRelationship(e.target.value)}/></label><label>Phone<input required minLength={3} maxLength={50} value={phone} onChange={e=>setPhone(e.target.value)}/></label><div className="actions"><button disabled={busy} type="submit">Add fictional contact</button></div></form><div className="table-wrap"><table><thead><tr><th>Contact</th><th>Relationship</th><th>Phone</th></tr></thead><tbody>{items.map(x=><tr key={x.id}><td>{x.contact_name}</td><td>{x.relationship}</td><td>{x.phone}</td></tr>)}</tbody></table>{items.length===0&&<p>No fictional contacts.</p>}</div>{error&&<p role="alert" className="error">{error}</p>}</section>;
+}
