@@ -67,4 +67,23 @@ async fn logout(headers:HeaderMap)->StatusCode{
  }
  StatusCode::NO_CONTENT
 }
-pub fn routes()->Router<AppState>{Router::new().route("/auth/status",get(status)).route("/auth/setup",post(setup)).route("/auth/login",post(login)).route("/auth/logout",post(logout))}
+
+#[derive(Deserialize)]
+struct PasswordChange{current_password:String,new_password:String}
+async fn change_password(State(s):State<AppState>,headers:HeaderMap,Json(body):Json<PasswordChange>)->Result<StatusCode,ApiError>{
+ if !authenticated(&headers){return Err(err(StatusCode::UNAUTHORIZED,"sign in required"))}
+ if body.new_password.len()<14 || body.new_password.len()>256 {return Err(err(StatusCode::BAD_REQUEST,"new password must contain 14-256 characters"))}
+ // The sandbox currently provisions exactly one global administrator.
+ let row=sqlx::query("SELECT id,password_hash FROM global_administrators ORDER BY created_at LIMIT 1").fetch_optional(&s.db).await.map_err(internal)?.ok_or_else(||err(StatusCode::NOT_FOUND,"administrator not found"))?;
+ let id:Uuid=row.try_get("id").map_err(internal)?;
+ let hash:String=row.try_get("password_hash").map_err(internal)?;
+ let parsed=PasswordHash::new(&hash).map_err(|_|err(StatusCode::INTERNAL_SERVER_ERROR,"password record invalid"))?;
+ if Argon2::default().verify_password(body.current_password.as_bytes(),&parsed).is_err(){return Err(err(StatusCode::UNAUTHORIZED,"current password incorrect"))}
+ let salt=SaltString::generate(&mut OsRng);
+ let updated=Argon2::default().hash_password(body.new_password.as_bytes(),&salt).map_err(|_|err(StatusCode::INTERNAL_SERVER_ERROR,"hash failed"))?.to_string();
+ let count=sqlx::query("UPDATE global_administrators SET password_hash=$1 WHERE id=$2 AND password_hash=$3").bind(updated).bind(id).bind(hash).execute(&s.db).await.map_err(internal)?.rows_affected();
+ if count!=1{return Err(err(StatusCode::CONFLICT,"password changed concurrently"))}
+ if let Ok(mut sessions)=sessions().lock(){sessions.clear();}
+ Ok(StatusCode::NO_CONTENT)
+}
+pub fn routes()->Router<AppState>{Router::new().route("/auth/status",get(status)).route("/auth/setup",post(setup)).route("/auth/login",post(login)).route("/auth/logout",post(logout)).route("/auth/password",post(change_password))}
