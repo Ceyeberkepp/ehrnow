@@ -1,11 +1,11 @@
-FROM node:22-bookworm-slim
+FROM node:22-bookworm-slim AS build
 WORKDIR /srv/clinician-web
 COPY apps/clinician-web/package.json ./
 RUN npm install --no-audit --no-fund
 COPY apps/clinician-web/ ./
 RUN npm run build
-# Vite writes its cache at startup; create only the small writable cache directory.
-RUN mkdir -p node_modules/.vite && chown node:node node_modules/.vite
-USER node
-EXPOSE 5173
-CMD ["npm","run","dev","--","--host","0.0.0.0","--port","5173","--strictPort"]
+
+FROM nginxinc/nginx-unprivileged:stable-alpine
+COPY deploy/nginx-web.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /srv/clinician-web/dist/ /usr/share/nginx/html/
+EXPOSE 8080
