@@ -75,3 +75,6 @@ Repository source confidentiality requires switching the currently public GitHub
 ## Graphical PostgreSQL database administration
 
 Adminer, a browser-based database manager similar to phpMyAdmin, is included as an optional Docker service. Run `bash scripts/db-admin.sh start`, then create an SSH tunnel forwarding local port 18080 to server localhost 18080 and open `http://127.0.0.1:18080`. See [Database Web GUI](DATABASE_WEB_GUI.md). Run `bash scripts/db-admin.sh stop` after use. Never expose it publicly.
+
+## Direct private IP access without SSH tunneling (opt in)
+After `bash scripts/install-private.sh` succeeds, inspect your server's address using `hostname -I`. Enable direct access with `bash scripts/enable-lan.sh PRIVATE_SERVER_IP`. Open `http://PRIVATE_SERVER_IP:5173` from a device on that same trusted network. The frontend proxies `/api` and `/dev` internally to the Rust API, so port 8080 stays bound to server localhost and PostgreSQL has no published TCP port. Restrict TCP/5173 to your own device with firewall/router rules. A shared development bearer token is not sufficient authentication for exposure to untrusted LAN users; never port-forward this service or use PHI.
