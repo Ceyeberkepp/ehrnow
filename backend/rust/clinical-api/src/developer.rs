@@ -53,11 +53,19 @@ async fn set_permissions(State(s):State<AppState>,headers:HeaderMap,Path(id):Pat
 async fn set_module(State(s):State<AppState>,headers:HeaderMap,Path(key):Path<String>,Json(body):Json<SetModule>)->Result<Json<Module>,ApiError>{
  authorize(&headers,&s.token)?;demo_tenant(&headers)?;
  if key=="developer" && !body.enabled{return Err(err(StatusCode::BAD_REQUEST,"developer console cannot be disabled in sandbox"));}
+ if body.enabled && !matches!(key.as_str(),"overview"|"patients"|"encounters"|"problems"|"allergies"|"scheduling"|"infrastructure"|"developer"){return Err(err(StatusCode::CONFLICT,"subsystem is not implemented"));}
  let module=sqlx::query_as::<_,Module>("UPDATE app_modules SET enabled=$1 WHERE key=$2 RETURNING key,label,enabled,sort_order").bind(body.enabled).bind(key).fetch_optional(&s.db).await.map_err(internal)?.ok_or_else(||err(StatusCode::NOT_FOUND,"module not found"))?;
  Ok(Json(module))
 }
+#[derive(Serialize,sqlx::FromRow)]
+struct ConfigChange {id:i64,entity_type:String,entity_id:String,operation:String,changed_at:chrono::DateTime<chrono::Utc>}
+async fn changes(State(s):State<AppState>,headers:HeaderMap)->Result<Json<Vec<ConfigChange>>,ApiError>{
+ authorize(&headers,&s.token)?;let tenant=demo_tenant(&headers)?;
+ let rows=sqlx::query_as::<_,ConfigChange>("SELECT id,entity_type,entity_id,operation,changed_at FROM config_change_log WHERE tenant_id=$1 ORDER BY id DESC LIMIT 100").bind(tenant).fetch_all(&s.db).await.map_err(internal)?;Ok(Json(rows))
+}
 pub fn routes()->Router<AppState>{Router::new()
 .route("/dev/admin/catalog",get(catalog))
+.route("/dev/admin/changes",get(changes))
 .route("/dev/admin/roles",post(create_role))
 .route("/dev/admin/roles/{id}/permissions",get(role_permissions).put(set_permissions))
 .route("/dev/admin/modules/{key}",axum::routing::put(set_module))}
