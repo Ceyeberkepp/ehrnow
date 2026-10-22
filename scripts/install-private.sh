@@ -2,29 +2,29 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 umask 077
-for tool in docker cargo npm openssl; do command -v "$tool" >/dev/null || { echo "Missing $tool. Install it before continuing." >&2; exit 1; }; done
-docker compose version >/dev/null || { echo "Docker Compose v2 required" >&2; exit 1; }
+command -v docker >/dev/null || { echo "Docker Engine + Compose v2 is required on Linux." >&2; exit 1; }
+docker compose version >/dev/null || { echo "Docker Compose v2 not found." >&2; exit 1; }
+command -v openssl >/dev/null || { echo "OpenSSL is required to generate credentials." >&2; exit 1; }
+docker info >/dev/null || { echo "Docker daemon not reachable by this user." >&2; exit 1; }
 if [ -e .env.private ]; then
-  echo "Private credentials already exist. Refusing to overwrite .env.private."
+  echo "Keeping existing .env.private credentials."
+  [ "$(stat -c %a .env.private)" = "600" ] || chmod 600 .env.private
 else
-  token="$(openssl rand -hex 32)"
-  dbpass="$(openssl rand -hex 24)"
-  {
-    printf 'EHR_DEV_MODE=1\n'
-    printf 'EHR_DEV_TOKEN=%s\n' "$token"
-    printf 'EHR_DB_PASSWORD=%s\n' "$dbpass"
-    printf 'DATABASE_URL=postgres://ehrdev:%s@127.0.0.1:15432/ehrnow\n' "$dbpass"
+  { printf 'EHR_DEV_TOKEN=%s\n' "$(openssl rand -hex 32)"
+    printf 'EHR_DB_PASSWORD=%s\n' "$(openssl rand -hex 24)"
   } > .env.private
   chmod 600 .env.private
 fi
-set -a
-# Generated values contain only hex characters and known literals.
-source .env.private
-set +a
-docker compose --env-file .env.private -f compose.private.yml up -d --wait postgres
-echo "Preparing Rust API ..."
-(cd backend/rust/clinical-api && cargo build)
-echo "Preparing React app ..."
-(cd apps/clinician-web && npm install --no-audit --no-fund)
-echo "Private install ready. Run: bash scripts/run-private.sh"
-echo "Credentials are in .env.private (owner-readable only). Do not share them."
+echo "Building EHRNow (React and Rust) in isolated Docker stages..."
+docker compose --env-file .env.private -f compose.private.yml build api web
+echo "Starting private services..."
+docker compose --env-file .env.private -f compose.private.yml up -d --wait
+echo "Checking Rust API ..."
+for i in $(seq 1 30); do
+  if docker compose --env-file .env.private -f compose.private.yml exec -T api /usr/local/bin/ehrnow-api --help >/dev/null 2>&1; then break; fi
+  if command -v curl >/dev/null && curl -fsS --max-time 2 http://127.0.0.1:8080/health >/dev/null; then break; fi
+  sleep 2
+done
+if command -v curl >/dev/null; then curl -fsS --max-time 10 http://127.0.0.1:8080/health >/dev/null || { echo "API health check failed. Check docker compose logs." >&2; exit 1; }; fi
+echo "Installed. On your laptop, SSH forward 5173 and 8080; then open http://127.0.0.1:5173."
+echo "Token is stored in the server's .env.private file. Do not disclose it."
