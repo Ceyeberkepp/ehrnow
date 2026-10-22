@@ -4,12 +4,12 @@
 
 ## Host prerequisites (Linux)
 - Linux server or dedicated Linux VM, at least 4 vCPU, 8 GB RAM recommended, ample free disk.
-- Docker Engine and Docker Compose v2 installed and running.
+- Docker Engine and Docker Compose v2 are installed automatically if missing on Debian 13, when run as root. Other operating systems require Docker to be preinstalled.
 - Git, Bash, OpenSSL and curl on the host.
 - Your server's SSH service and an SSH key allowing access for your account.
 - Outbound Internet during first build to fetch PostgreSQL, Rust and Node images and dependencies.
 
-**You do NOT need to install Rust, Cargo, Node.js, npm or PostgreSQL on the Linux host.** Their dependencies are included in the Docker build images.
+**You do NOT need to install Rust, Cargo, Node.js, npm or PostgreSQL on the Linux host.** Their dependencies are included in the Docker build images. On Debian 13, the installer also automatically installs missing Docker Engine/Compose and basic command-line prerequisites. On restricted LXC hosts, the provider must allow nested containers.
 
 ## Installation
 
