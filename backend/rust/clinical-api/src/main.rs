@@ -3,6 +3,7 @@ mod forms;
 mod developer;
 mod allergies;
 mod medications;
+mod contacts;
 mod staff;
 mod problems;
 mod scheduling;
@@ -97,6 +98,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .merge(problems::routes())
         .merge(allergies::routes())
         .merge(medications::routes())
+        .merge(contacts::routes())
         .merge(staff::routes())
         .merge(developer::routes())
         .merge(forms::routes())
