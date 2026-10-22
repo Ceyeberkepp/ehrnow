@@ -16,13 +16,13 @@ DECLARE old_value jsonb; new_value jsonb; scope_tenant uuid; identifier text;
 BEGIN
  old_value := CASE WHEN TG_OP='INSERT' THEN NULL ELSE to_jsonb(OLD) END;
  new_value := CASE WHEN TG_OP='DELETE' THEN NULL ELSE to_jsonb(NEW) END;
- scope_tenant := CASE
-   WHEN TG_TABLE_NAME='app_modules' THEN '00000000-0000-4000-8000-000000000001'::uuid
-   WHEN TG_OP='DELETE' THEN OLD.tenant_id ELSE NEW.tenant_id END;
+ scope_tenant := CASE WHEN TG_TABLE_NAME='app_modules'
+ THEN '00000000-0000-4000-8000-000000000001'::uuid
+ ELSE COALESCE(old_value,new_value)->>'tenant_id' END::uuid;
  identifier := CASE
-   WHEN TG_TABLE_NAME='app_modules' THEN CASE WHEN TG_OP='DELETE' THEN OLD.key ELSE NEW.key END
-   WHEN TG_TABLE_NAME='app_roles' THEN CASE WHEN TG_OP='DELETE' THEN OLD.id::text ELSE NEW.id::text END
-   ELSE CASE WHEN TG_OP='DELETE' THEN OLD.role_id::text||':'||OLD.permission_key ELSE NEW.role_id::text||':'||NEW.permission_key END END;
+ WHEN TG_TABLE_NAME='app_modules' THEN COALESCE(new_value,old_value)->>'key'
+ WHEN TG_TABLE_NAME='app_roles' THEN COALESCE(new_value,old_value)->>'id'
+ ELSE (COALESCE(new_value,old_value)->>'role_id')||':'||(COALESCE(new_value,old_value)->>'permission_key') END;
  INSERT INTO config_change_log(tenant_id,entity_type,entity_id,operation,previous_value,current_value)
  VALUES(scope_tenant,TG_TABLE_NAME,identifier,TG_OP,old_value,new_value);
  RETURN CASE WHEN TG_OP='DELETE' THEN OLD ELSE NEW END;
