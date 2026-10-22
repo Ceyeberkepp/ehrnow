@@ -19,6 +19,7 @@ else
   } > .env.private
   chmod 600 .env.private
 fi
+bash scripts/ensure-private-tls.sh "${EHR_WEB_BIND_IP:-127.0.0.1}"
 echo "Building EHRNow (React and Rust) in isolated Docker stages..."
 docker compose --env-file .env.private -f compose.private.yml build api web
 echo "Starting private services..."
