@@ -6,3 +6,5 @@
 .mapping-preview{white-space:pre-wrap;overflow-wrap:anywhere;background:#f1f5fa;padding:14px;border-radius:10px}.admin-item input:not([type=checkbox]),.admin-item select{min-width:0;max-width:210px;padding:7px;border:1px solid #cad8e8;border-radius:6px}
 
 .login-form{display:grid;gap:12px;margin-top:20px}.login-form input{width:100%;border:1px solid #cbd8e5;border-radius:8px;padding:12px}.login-form button{justify-content:center}
+
+.patient-link{background:transparent;color:#175f9e;padding:0;font-weight:650;text-decoration:underline;text-underline-offset:2px}.patient-summary{display:grid;gap:20px}.patient-summary>.secondary{justify-self:start}.patient-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:22px}.patient-fields>div{display:flex;gap:12px;align-items:flex-start}.patient-fields>div>span{display:grid;gap:5px;min-width:0}.patient-fields small{font-size:12px;color:#76899e}.patient-fields strong{overflow-wrap:anywhere}.patient-summary .panel p svg{vertical-align:middle;margin-right:5px}
