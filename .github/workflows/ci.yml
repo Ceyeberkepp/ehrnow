@@ -76,7 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate one-click installer syntax
-        run: bash -n scripts/install-private.sh scripts/bootstrap-debian-docker.sh scripts/run-private.sh scripts/enable-lan.sh scripts/ensure-private-tls.sh
+        run: bash -n scripts/install-private.sh scripts/bootstrap-debian-docker.sh scripts/run-private.sh scripts/enable-lan.sh scripts/ensure-private-tls.sh scripts/backup-private.sh
       - name: Set up isolated Docker deployment
         run: sudo bash scripts/install-private.sh
       - name: Check private loopback ports and service health
