@@ -25,6 +25,6 @@ docker compose --env-file .env.private -f compose.private.yml up -d --wait postg
 echo "Preparing Rust API ..."
 (cd backend/rust/clinical-api && cargo build)
 echo "Preparing React app ..."
-(cd apps/clinician-web && npm ci)
+(cd apps/clinician-web && npm install --no-audit --no-fund)
 echo "Private install ready. Run: bash scripts/run-private.sh"
 echo "Credentials are in .env.private (owner-readable only). Do not share them."
