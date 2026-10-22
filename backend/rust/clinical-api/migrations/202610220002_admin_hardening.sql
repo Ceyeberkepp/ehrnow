@@ -17,7 +17,7 @@ BEGIN
  old_value := CASE WHEN TG_OP='INSERT' THEN NULL ELSE to_jsonb(OLD) END;
  new_value := CASE WHEN TG_OP='DELETE' THEN NULL ELSE to_jsonb(NEW) END;
  scope_tenant := CASE WHEN TG_TABLE_NAME='app_modules'
- THEN '00000000-0000-4000-8000-000000000001'::uuid
+ THEN '00000000-0000-4000-8000-000000000001'
  ELSE COALESCE(old_value,new_value)->>'tenant_id' END::uuid;
  identifier := CASE
  WHEN TG_TABLE_NAME='app_modules' THEN COALESCE(new_value,old_value)->>'key'
