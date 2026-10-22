@@ -22,7 +22,9 @@ fi
 if ! grep -q '^EHR_SETUP_KEY=' .env.private; then
   printf 'EHR_SETUP_KEY=%s\n' "$(openssl rand -hex 32)" >> .env.private
 fi
-bash scripts/ensure-private-tls.sh "${EHR_WEB_BIND_IP:-127.0.0.1}"
+web_ip="$(sed -n 's/^EHR_WEB_BIND_IP=//p' .env.private | tail -n 1)"
+web_ip="${web_ip:-127.0.0.1}"
+bash scripts/ensure-private-tls.sh "$web_ip"
 echo "Building EHRNow (React and Rust) in isolated Docker stages..."
 docker compose --env-file .env.private -f compose.private.yml build api web
 echo "Starting private services..."
@@ -33,6 +35,8 @@ for i in $(seq 1 30); do
   sleep 2
 done
 curl -fsS --max-time 10 http://127.0.0.1:8080/health >/dev/null || { echo "API health check failed. Check docker compose logs." >&2; exit 1; }
-curl -kfsS --max-time 10 https://127.0.0.1:5173/ >/dev/null || { echo "React UI check failed." >&2; exit 1; }
-echo "Installed. On your laptop, SSH forward 5173 and 8080; then open https://127.0.0.1:5173."
+echo "Checking HTTPS web service and authentication status ..."
+curl -kfsS --max-time 10 "https://$web_ip:5173/" >/dev/null || { echo "HTTPS web check failed. Check docker compose logs web." >&2; exit 1; }
+curl -kfsS --max-time 10 "https://$web_ip:5173/auth/status" | grep -q 'setup_required' || { echo "Authentication proxy check failed." >&2; exit 1; }
+echo "Installed development EHRNow: https://$web_ip:5173"
 echo "Token is stored in the server's .env.private file. Do not disclose it."
