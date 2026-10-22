@@ -30,6 +30,6 @@ for i in $(seq 1 30); do
   sleep 2
 done
 curl -fsS --max-time 10 http://127.0.0.1:8080/health >/dev/null || { echo "API health check failed. Check docker compose logs." >&2; exit 1; }
-curl -fsS --max-time 10 http://127.0.0.1:5173/ >/dev/null || { echo "React UI check failed." >&2; exit 1; }
-echo "Installed. On your laptop, SSH forward 5173 and 8080; then open http://127.0.0.1:5173."
+curl -kfsS --max-time 10 https://127.0.0.1:5173/ >/dev/null || { echo "React UI check failed." >&2; exit 1; }
+echo "Installed. On your laptop, SSH forward 5173 and 8080; then open https://127.0.0.1:5173."
 echo "Token is stored in the server's .env.private file. Do not disclose it."
