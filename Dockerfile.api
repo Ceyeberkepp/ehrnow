@@ -1,0 +1,14 @@
+FROM rust:1-bookworm AS builder
+WORKDIR /src
+COPY backend/rust/clinical-api ./backend/rust/clinical-api
+WORKDIR /src/backend/rust/clinical-api
+RUN cargo build --release
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
+RUN useradd --system --no-create-home --uid 10001 ehrnow
+COPY --from=builder /src/backend/rust/clinical-api/target/release/ehrnow-clinical-api /usr/local/bin/ehrnow-api
+USER ehrnow
+ENV EHR_DEV_MODE=1 EHR_BIND_ADDR=0.0.0.0:8080
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/ehrnow-api"]
