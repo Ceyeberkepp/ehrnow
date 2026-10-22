@@ -7,4 +7,6 @@
 
 .login-form{display:grid;gap:12px;margin-top:20px}.login-form input{width:100%;border:1px solid #cbd8e5;border-radius:8px;padding:12px}.login-form button{justify-content:center}
 
+.patient-link{background:transparent;color:#175f9e;padding:0;font-weight:650;text-decoration:underline;text-underline-offset:2px}.patient-summary{display:grid;gap:20px}.patient-summary>.secondary{justify-self:start}.patient-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:22px}.patient-fields>div{display:flex;gap:12px;align-items:flex-start}.patient-fields>div>span{display:grid;gap:5px;min-width:0}.patient-fields small{font-size:12px;color:#76899e}.patient-fields strong{overflow-wrap:anywhere}.patient-summary .panel p svg{vertical-align:middle;margin-right:5px}
+
 .overview-page{display:grid;gap:22px}.overview-page .stats{margin-bottom:0}.workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:20px}.workspace-card{display:flex;background:#f7fbff;color:#193859;text-align:left;border:1px solid #dbe8f5;padding:18px;min-height:96px}.workspace-card>span{display:grid;gap:7px;flex:1}.workspace-card small{color:#647f99;line-height:1.4;font-weight:400}.workspace-card:hover{border-color:#2074b9;background:#eff8ff}.overview-page .stat span svg{vertical-align:middle}
