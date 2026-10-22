@@ -15,6 +15,7 @@ function App(){
  const [token,setToken]=useState('');
  const [username,setUsername]=useState('');
  const [password,setPassword]=useState('');
+ const [setupKey,setSetupKey]=useState('');
  const [setupRequired,setSetupRequired]=useState(false);
  const [authReady,setAuthReady]=useState(false);
  const [tenant,setTenant]=useState('');
@@ -36,10 +37,10 @@ function App(){
  async function connect(){
   setBusy(true);setError('');
   try {
-   const response=await fetch(setupRequired?'/auth/setup':'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+   const response=await fetch(setupRequired?'/auth/setup':'/auth/login',{method:'POST',headers:{'Content-Type':'application/json',...(setupRequired?{'x-ehr-setup-key':setupKey}:{})},body:JSON.stringify({username,password})});
    const session=await response.json();
    if(!response.ok)throw Error(session.error||'Authentication failed');
-   setToken(session.access_token);setPassword('');setTenant(session.tenant_id);
+   setToken(session.access_token);setPassword('');setSetupKey('');setTenant(session.tenant_id);
    const headers={Authorization:'Bearer '+session.access_token,'x-ehr-tenant-id':session.tenant_id};
    const [listResponse,catalogResponse]=await Promise.all([fetch('/api/v1/patients',{headers}),fetch('/dev/admin/catalog',{headers})]);
    if(!listResponse.ok||!catalogResponse.ok)throw Error('Unable to load workspace');
@@ -59,7 +60,7 @@ function App(){
  <div className="sidebar-foot"><Shield size={17}/>Development environment<br/>Synthetic records only</div></aside>
  <main className="main"><header><div><small>EHRNow / {view}</small><h1>{view==='Developer Center'?'Developer Center':view==='Reported Allergies'?'Reported Allergies':view==='Problem List'?'Problem List':view==='Scheduling'?'Scheduling':view==='Encounters'?'Encounters & Notes':view==='Patient Summary'?'Patient Summary':view==='Patients'?'Patient Registry':view==='Overview'?'Clinical Overview':view==='New Patient'?'Register Patient':'Platform Status'}</h1></div><div className="header-right"><span className="status"><span className="dot"/>{connected?'Connected to local API':'Not connected'}</span>{connected&&<button className="secondary" onClick={()=>void logout()}>Sign out</button>}<span className="avatar">EN</span></div></header>
  <div className="warning"><Shield size={17}/> Developer preview — DO NOT enter real patient data or use for clinical care.</div>
- {!connected?<section className="panel connect"><HeartPulse size={30}/><h2>{setupRequired?'Create Global Administrator':'Sign in to EHRNow'}</h2><p>{setupRequired?'First installation: create the global administrator account. This setup is allowed only once.':'Enter your administrator credentials to open the development workspace.'}</p><form className="login-form" onSubmit={e=>{e.preventDefault();void connect()}}><input required aria-label="Username" placeholder="Username" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)}/><input required type="password" minLength={setupRequired?14:1} aria-label="Password" placeholder={setupRequired?'Create password (14+ characters)':'Password'} autoComplete={setupRequired?'new-password':'current-password'} value={password} onChange={e=>setPassword(e.target.value)}/><button type="submit" disabled={busy||!authReady||!username||password.length<(setupRequired?14:1)}>{busy?'Signing in…':setupRequired?'Create Global Admin':'Sign In'}</button></form></section>:
+ {!connected?<section className="panel connect"><HeartPulse size={30}/><h2>{setupRequired?'Create Global Administrator':'Sign in to EHRNow'}</h2><p>{setupRequired?'First installation: create the global administrator account. This setup is allowed only once.':'Enter your administrator credentials to open the development workspace.'}</p><form className="login-form" onSubmit={e=>{e.preventDefault();void connect()}}><input required aria-label="Username" placeholder="Username" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)}/><input required type="password" minLength={setupRequired?14:1} aria-label="Password" placeholder={setupRequired?'Create password (14+ characters)':'Password'} autoComplete={setupRequired?'new-password':'current-password'} value={password} onChange={e=>setPassword(e.target.value)}/>{setupRequired&&<input required type="password" autoComplete="off" aria-label="Installation setup key" placeholder="Installation setup key from server" value={setupKey} onChange={e=>setSetupKey(e.target.value)}/>}<button type="submit" disabled={busy||!authReady||!username||password.length<(setupRequired?14:1)}>{busy?'Signing in…':setupRequired?'Create Global Admin':'Sign In'}</button></form></section>:
  view==='New Patient'?<section className="panel"><h2>New synthetic patient</h2><form onSubmit={save} className="form">
  {[['mrn','Medical record number'],['given_name','Given name'],['family_name','Family name'],['birth_date','Birth date']].map(([key,label])=><label key={key}>{label}<input required maxLength={120} type={key==='birth_date'?'date':'text'} value={form[key as keyof typeof form]} onChange={e=>setForm({...form,[key]:e.target.value})}/></label>)}
  <div className="actions"><button type="button" className="secondary" onClick={()=>setView('Patients')}>Cancel</button><button disabled={busy} type="submit">Create record</button></div></form></section>:

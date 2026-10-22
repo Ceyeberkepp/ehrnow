@@ -35,6 +35,7 @@ services:
       EHR_DEV_MODE: "1"
       EHR_BIND_ADDR: "0.0.0.0:8080"
       EHR_DEV_TOKEN: ${EHR_DEV_TOKEN:?required}
+      EHR_SETUP_KEY: ${EHR_SETUP_KEY:?required}
       DATABASE_URL: postgres://ehrdev:${EHR_DB_PASSWORD:?required}@postgres:5432/ehrnow
     depends_on:
       postgres:
