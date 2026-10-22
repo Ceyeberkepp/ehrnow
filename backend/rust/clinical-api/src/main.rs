@@ -1,3 +1,4 @@
+mod auth;
 mod forms;
 mod developer;
 mod allergies;
@@ -25,7 +26,7 @@ fn err(status: StatusCode, message: &'static str) -> ApiError { (status, Json(Er
 fn authorize(headers: &HeaderMap, token: &str) -> Result<(), ApiError> {
     let provided = headers.get(header::AUTHORIZATION).and_then(|x| x.to_str().ok()).and_then(|x| x.strip_prefix("Bearer "));
     let valid = provided.map(|x| x.len() == token.len() && bool::from(x.as_bytes().ct_eq(token.as_bytes()))).unwrap_or(false);
-    if valid { Ok(()) } else { Err(err(StatusCode::UNAUTHORIZED, "unauthorized")) }
+    if valid || auth::authenticated(headers) { Ok(()) } else { Err(err(StatusCode::UNAUTHORIZED, "unauthorized")) }
 }
 fn demo_tenant(headers: &HeaderMap) -> Result<Uuid, ApiError> {
     let id = headers.get("x-ehr-tenant-id").and_then(|v| v.to_str().ok()).ok_or_else(|| err(StatusCode::BAD_REQUEST, "tenant header required"))?;
@@ -88,6 +89,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/dev/bootstrap", post(bootstrap))
         .route("/api/v1/patients", get(list_patients).post(create_patient))
         .route("/api/v1/patients/{id}", get(get_patient))
+        .merge(auth::routes())
         .merge(encounters::routes())
         .merge(scheduling::routes())
         .merge(problems::routes())
