@@ -1,0 +1,13 @@
+import {Activity,CalendarDays,ClipboardList,Users,ShieldCheck,ArrowRight} from 'lucide-react';
+type Patient={id:string;mrn:string;given_name:string;family_name:string;birth_date:string};
+type Props={patients:Patient[];onNavigate:(view:string)=>void};
+export default function ClinicalOverview({patients,onNavigate}:Props){
+ const recent=patients.slice(0,5);
+ const actions=[{label:'Patient Registry',view:'Patients',icon:Users,description:'Find synthetic patients and register a new record'},{label:'Encounters & Notes',view:'Encounters',icon:ClipboardList,description:'Open the available encounter workspace'},{label:'Scheduling',view:'Scheduling',icon:CalendarDays,description:'Review the development appointment schedule'},{label:'Problem List',view:'Problem List',icon:Activity,description:'Review patient problem lists'}];
+ return <section aria-label="Clinical overview" className="overview-page">
+  <div className="stats"><div className="stat"><small>Registered synthetic patients</small><strong>{patients.length}</strong><span>Live data from the connected PostgreSQL registry</span></div><div className="stat"><small>Recent patients loaded</small><strong>{recent.length}</strong><span>Latest available directory records</span></div><div className="stat"><small>Environment</small><strong>Development</strong><span><ShieldCheck size={14}/> Synthetic data only — no clinical care</span></div></div>
+  <section className="panel"><h2>Available workspaces</h2><p>These workspaces have initial application features; they are not validated clinical modules.</p><div className="workspace-grid">{actions.map(({label,view,icon:Icon,description})=><button className="workspace-card" key={view} onClick={()=>onNavigate(view)}><Icon size={21}/><span><strong>{label}</strong><small>{description}</small></span><ArrowRight size={16}/></button>)}</div></section>
+  <section className="panel"><div className="panel-top"><h2>Recently registered synthetic patients</h2><button className="secondary" onClick={()=>onNavigate('Patients')}>Open Registry</button></div><div className="table-wrap"><table><thead><tr><th>Patient</th><th>Medical record number</th><th>Date of birth</th></tr></thead><tbody>{recent.map(p=><tr key={p.id}><td>{p.family_name}, {p.given_name}</td><td>{p.mrn}</td><td>{p.birth_date}</td></tr>)}</tbody></table>{recent.length===0&&<div className="empty">No fictional patient records yet. Open Patient Registry to create one.</div>}</div></section>
+  <section className="panel"><h2>Modules still in development</h2><p>Medication prescribing, lab/radiology orders, revenue cycle, full global administration, patient portal, inpatient and specialty workflows are not implemented and must not be used for care.</p></section>
+ </section>
+}
