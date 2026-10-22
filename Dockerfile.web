@@ -4,7 +4,8 @@ COPY apps/clinician-web/package.json ./
 RUN npm install --no-audit --no-fund
 COPY apps/clinician-web/ ./
 RUN npm run build
-RUN chown -R node:node /srv/clinician-web
+# Vite writes its cache at startup; create only the small writable cache directory.
+RUN mkdir -p node_modules/.vite && chown node:node node_modules/.vite
 USER node
 EXPOSE 5173
 CMD ["npm","run","dev","--","--host","0.0.0.0","--port","5173","--strictPort"]
