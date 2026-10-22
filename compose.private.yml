@@ -15,6 +15,18 @@ services:
       retries: 15
     security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
+  adminer:
+    image: adminer:5
+    profiles: ["db-admin"]
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18080:8080"
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
   api:
     build:
       context: .
