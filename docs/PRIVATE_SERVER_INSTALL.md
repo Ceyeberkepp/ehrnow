@@ -71,3 +71,7 @@ If the build fails on first installation, inspect logs and verify the server's R
 This is a **private sandbox** deployment, not complete user authentication. Any person holding the shared developer token and server access could operate the sandbox. Production OIDC/MFA, role enforcement, patient isolation, audit validation and clinical safety reviews are not ready. Use Linux SSH key access and server firewall/VPN controls.
 
 Repository source confidentiality requires switching the currently public GitHub repository to Private; a proprietary license alone doesn't hide source files.
+
+## Graphical PostgreSQL database administration
+
+Adminer, a browser-based database manager similar to phpMyAdmin, is included as an optional Docker service. Run `bash scripts/db-admin.sh start`, then create an SSH tunnel forwarding local port 18080 to server localhost 18080 and open `http://127.0.0.1:18080`. See [Database Web GUI](DATABASE_WEB_GUI.md). Run `bash scripts/db-admin.sh stop` after use. Never expose it publicly.
