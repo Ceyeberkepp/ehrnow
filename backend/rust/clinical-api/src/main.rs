@@ -1,3 +1,4 @@
+mod developer;
 mod allergies;
 mod problems;
 mod scheduling;
@@ -80,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let state = AppState { db, token: Arc::new(token) };
     let cors = tower_http::cors::CorsLayer::new()
         .allow_origin("http://127.0.0.1:5173".parse::<axum::http::HeaderValue>()?)
-        .allow_methods([axum::http::Method::GET, axum::http::Method::POST])
+        .allow_methods([axum::http::Method::GET, axum::http::Method::POST, axum::http::Method::PUT])
         .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE, "x-ehr-tenant-id".parse()?]);
     let app = Router::new().route("/health", get(health))
         .route("/dev/bootstrap", post(bootstrap))
@@ -90,6 +91,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .merge(scheduling::routes())
         .merge(problems::routes())
         .merge(allergies::routes())
+        .merge(developer::routes())
         .layer(cors).with_state(state);
     let addr: SocketAddr = "127.0.0.1:8080".parse()?;
     println!("EHRNow DEVELOPMENT API on {addr}; synthetic records only");
