@@ -1,3 +1,4 @@
+import FormStudio from './FormStudio';
 import {useEffect,useState,type FormEvent} from 'react';
 type Module={key:string;label:string;enabled:boolean;sort_order:number};
 type Permission={key:string;module_key:string;label:string};
@@ -21,5 +22,5 @@ export default function DeveloperCenter({request,onCatalog}:Props){
  <div className="form"><label>Edit role<select value={selected} onChange={e=>void choose(e.target.value)}><option value="">Choose a role</option>{catalog.roles.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select></label></div>
  {selected&&<><h3>Permission matrix</h3><div className="admin-grid">{catalog.permissions.map(p=><label className="admin-item" key={p.key}><span>{p.label}<small> {p.key}</small></span><input type="checkbox" checked={grants.includes(p.key)} onChange={e=>setGrants(g=>e.target.checked?[...g,p.key]:g.filter(k=>k!==p.key))}/></label>)}</div><button onClick={()=>void save()}>Save role permissions</button></>}
  {status&&<p role="status">{status}</p>}{error&&<p role="alert" className="error">{error}</p>}
- <h3>Planned developer subsystems</h3><p>User-role assignment, tenant policy enforcement, menu/page designer, form designer, workflow designer, API integrations, audit viewer, system diagnostics, versioned publishing and rollback. These remain gated until real identity and authorization are implemented.</p></section>;
+ <FormStudio request={request}/><h3>Planned developer subsystems</h3><p>User-role assignment, tenant policy enforcement, menu/page designer, form designer, workflow designer, API integrations, audit viewer, system diagnostics, versioned publishing and rollback. These remain gated until real identity and authorization are implemented.</p></section>;
 }
