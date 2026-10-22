@@ -1,3 +1,4 @@
+import ClinicalOverview from './ClinicalOverview';
 import DeveloperCenter from './DeveloperCenter';
 import ReportedAllergies from './ReportedAllergies';
 import ProblemList from './ProblemList';
@@ -18,7 +19,7 @@ function App(){
  const [authReady,setAuthReady]=useState(false);
  const [tenant,setTenant]=useState('');
  const [patients,setPatients]=useState<Patient[]>([]);
- const [view,setView]=useState('Patients');
+ const [view,setView]=useState('Overview');
  const [moduleCatalog,setModuleCatalog]=useState<{modules:{key:string;label:string;enabled:boolean}[]} | null>(null);
  const [search,setSearch]=useState('');
  const [error,setError]=useState('');
@@ -44,7 +45,7 @@ function App(){
    setPatients(await listResponse.json());setModuleCatalog(await catalogResponse.json());
   }catch(e){setError(String(e));setToken('');setTenant('');}finally{setBusy(false)}
  }
- async function logout(){try{await call('/auth/logout','POST')}catch{}setToken('');setTenant('');setModuleCatalog(null);setPatients([]);setView('Patients');}
+ async function logout(){try{await call('/auth/logout','POST')}catch{}setToken('');setTenant('');setModuleCatalog(null);setPatients([]);setView('Overview');}
  async function refresh(){try{setPatients(await call('/api/v1/patients'));setError('');}catch(e){setError(String(e));}}
  async function save(e:React.FormEvent){e.preventDefault();setBusy(true);setError('');
   try{await call('/api/v1/patients','POST',form);setForm({mrn:'',given_name:'',family_name:'',birth_date:''});setView('Patients');await refresh();}
@@ -66,6 +67,7 @@ function App(){
  view==='Scheduling'?<Scheduling patients={patients} request={call}/>:
  view==='Problem List'?<ProblemList patients={patients} request={call}/>:
  view==='Reported Allergies'?<ReportedAllergies patients={patients} request={call}/>:
+ view==='Overview'?<ClinicalOverview patients={patients} onNavigate={setView}/>:
  view==='Patients'?<><div className="stats"><div className="stat"><small>Registered synthetic patients</small><strong>{patients.length}</strong><span>Local development database</span></div><div className="stat"><small>Connected tenant</small><strong>1</strong><span>Development only</span></div><div className="stat"><small>Clinical operations</small><strong>Not enabled</strong><span>Safety gates required</span></div></div><section className="panel"><div className="panel-top"><div><h2>Patient Directory</h2><p>Fictional registration records</p></div><button onClick={()=>setView('New Patient')}><Plus size={16}/>New Patient</button></div><div className="search"><Search size={18}/><input aria-label="Search patients" placeholder="Search by patient name or MRN" value={search} onChange={e=>setSearch(e.target.value)}/></div><div className="table-wrap"><table><thead><tr><th>Patient</th><th>MRN</th><th>Date of birth</th><th>Record ID</th></tr></thead><tbody>{filtered.map(p=><tr key={p.id}><td><b>{p.family_name}, {p.given_name}</b></td><td>{p.mrn}</td><td>{p.birth_date}</td><td className="mono">{p.id.slice(0,8)}…</td></tr>)}</tbody></table>{filtered.length===0&&<div className="empty">No matching fictional patient records yet.</div>}</div></section></>:
  <section className="panel"><h2>{view}</h2><p>{view==='Overview'?'Patient registry connected. Clinical chart, medication and ordering workflows require implementation and clinical verification.':'Rust clinical API and PostgreSQL registry connected. MongoDB, Neo4j, search and integrations are not yet clinically wired.'}</p></section>}
  {error&&<div role="alert" className="error">{error}</div>}
