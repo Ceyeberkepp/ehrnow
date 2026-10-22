@@ -70,3 +70,18 @@ jobs:
           for testcase in database/postgres/tests/*.sql; do
             psql -h 127.0.0.1 -U ehrdev -d ehrnow -v ON_ERROR_STOP=1 -f "$testcase"
           done
+
+  private-install-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up isolated Docker deployment
+        run: bash scripts/install-private.sh
+      - name: Check private loopback ports and service health
+        run: |
+          curl --fail --silent http://127.0.0.1:8080/health
+          curl --fail --silent http://127.0.0.1:5173/ >/dev/null
+          test "$(docker compose --env-file .env.private -f compose.private.yml ps --status running --services | wc -l)" -eq 3
+      - name: Print sanitized service logs on failure
+        if: failure()
+        run: docker compose --env-file .env.private -f compose.private.yml ps
