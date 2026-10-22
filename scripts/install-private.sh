@@ -5,6 +5,7 @@ umask 077
 command -v docker >/dev/null || { echo "Docker Engine + Compose v2 is required on Linux." >&2; exit 1; }
 docker compose version >/dev/null || { echo "Docker Compose v2 not found." >&2; exit 1; }
 command -v openssl >/dev/null || { echo "OpenSSL is required to generate credentials." >&2; exit 1; }
+command -v curl >/dev/null || { echo "curl is required for health verification." >&2; exit 1; }
 docker info >/dev/null || { echo "Docker daemon not reachable by this user." >&2; exit 1; }
 if [ -e .env.private ]; then
   echo "Keeping existing .env.private credentials."
@@ -21,10 +22,10 @@ echo "Starting private services..."
 docker compose --env-file .env.private -f compose.private.yml up -d --wait
 echo "Checking Rust API ..."
 for i in $(seq 1 30); do
-  if docker compose --env-file .env.private -f compose.private.yml exec -T api /usr/local/bin/ehrnow-api --help >/dev/null 2>&1; then break; fi
-  if command -v curl >/dev/null && curl -fsS --max-time 2 http://127.0.0.1:8080/health >/dev/null; then break; fi
+  if curl -fsS --max-time 2 http://127.0.0.1:8080/health >/dev/null; then break; fi
   sleep 2
 done
-if command -v curl >/dev/null; then curl -fsS --max-time 10 http://127.0.0.1:8080/health >/dev/null || { echo "API health check failed. Check docker compose logs." >&2; exit 1; }; fi
+curl -fsS --max-time 10 http://127.0.0.1:8080/health >/dev/null || { echo "API health check failed. Check docker compose logs." >&2; exit 1; }
+curl -fsS --max-time 10 http://127.0.0.1:5173/ >/dev/null || { echo "React UI check failed." >&2; exit 1; }
 echo "Installed. On your laptop, SSH forward 5173 and 8080; then open http://127.0.0.1:5173."
 echo "Token is stored in the server's .env.private file. Do not disclose it."
