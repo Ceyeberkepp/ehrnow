@@ -4,6 +4,7 @@ mod developer;
 mod allergies;
 mod medications;
 mod contacts;
+mod staff;
 mod problems;
 mod scheduling;
 mod encounters;
@@ -98,6 +99,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .merge(allergies::routes())
         .merge(medications::routes())
         .merge(contacts::routes())
+        .merge(staff::routes())
         .merge(developer::routes())
         .merge(forms::routes())
         .layer(cors).with_state(state);
