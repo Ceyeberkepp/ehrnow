@@ -1,0 +1,21 @@
+name: ehrnow-private
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ehrdev
+      POSTGRES_PASSWORD: ${EHR_DB_PASSWORD:?private database password required}
+      POSTGRES_DB: ehrnow
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - ehrnow-private-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U ehrdev -d ehrnow"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+volumes:
+  ehrnow-private-pgdata:
