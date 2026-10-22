@@ -9,7 +9,7 @@ import { Activity, Users, Shield, Search, Plus, HeartPulse, LayoutDashboard, Dat
 import './style.css';
 
 type Patient = { id:string; mrn:string; given_name:string; family_name:string; birth_date:string };
-const BASE='http://127.0.0.1:8080';
+const BASE=''; // same-origin Vite proxy keeps API off the LAN
 function App(){
  const [token,setToken]=useState('');
  const [tenant,setTenant]=useState('');
