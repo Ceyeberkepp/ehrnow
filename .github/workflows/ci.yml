@@ -75,6 +75,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Validate one-click installer syntax
+        run: bash -n scripts/install-private.sh scripts/bootstrap-debian-docker.sh scripts/run-private.sh
       - name: Set up isolated Docker deployment
         run: bash scripts/install-private.sh
       - name: Check private loopback ports and service health
