@@ -6,8 +6,6 @@ services:
       POSTGRES_USER: ehrdev
       POSTGRES_PASSWORD: ${EHR_DB_PASSWORD:?private database password required}
       POSTGRES_DB: ehrnow
-    ports:
-      - "127.0.0.1:15432:5432"
     volumes:
       - ehrnow-private-pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -15,6 +13,32 @@ services:
       interval: 5s
       timeout: 5s
       retries: 15
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      EHR_DEV_MODE: "1"
+      EHR_BIND_ADDR: "0.0.0.0:8080"
+      EHR_DEV_TOKEN: ${EHR_DEV_TOKEN:?required}
+      DATABASE_URL: postgres://ehrdev:${EHR_DB_PASSWORD:?required}@postgres:5432/ehrnow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:8080"
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:5173:5173"
     security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
 volumes:
