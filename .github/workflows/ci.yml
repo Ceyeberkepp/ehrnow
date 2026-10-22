@@ -76,13 +76,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate one-click installer syntax
-        run: bash -n scripts/install-private.sh scripts/bootstrap-debian-docker.sh scripts/run-private.sh
+        run: bash -n scripts/install-private.sh scripts/bootstrap-debian-docker.sh scripts/run-private.sh scripts/enable-lan.sh scripts/ensure-private-tls.sh
       - name: Set up isolated Docker deployment
         run: bash scripts/install-private.sh
       - name: Check private loopback ports and service health
         run: |
           curl --fail --silent http://127.0.0.1:8080/health
-          curl --fail --silent http://127.0.0.1:5173/ >/dev/null
+          curl --fail --silent --insecure https://127.0.0.1:5173/ >/dev/null
           test "$(docker compose --env-file .env.private -f compose.private.yml ps --status running --services | wc -l)" -eq 3
       - name: Print sanitized service logs on failure
         if: failure()

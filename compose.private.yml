@@ -44,13 +44,15 @@ services:
     security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
   web:
+    volumes:
+      - ./.private-tls:/etc/nginx/tls:ro
     build:
       context: .
       dockerfile: Dockerfile.web
     depends_on:
       - api
     ports:
-      - "${EHR_WEB_BIND_IP:-127.0.0.1}:5173:5173"
+      - "${EHR_WEB_BIND_IP:-127.0.0.1}:5173:8443"
     security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
 volumes:

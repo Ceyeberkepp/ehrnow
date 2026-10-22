@@ -19,6 +19,7 @@ else
   } > .env.private
   chmod 600 .env.private
 fi
+bash scripts/ensure-private-tls.sh "${EHR_WEB_BIND_IP:-127.0.0.1}"
 echo "Building EHRNow (React and Rust) in isolated Docker stages..."
 docker compose --env-file .env.private -f compose.private.yml build api web
 echo "Starting private services..."
@@ -29,6 +30,6 @@ for i in $(seq 1 30); do
   sleep 2
 done
 curl -fsS --max-time 10 http://127.0.0.1:8080/health >/dev/null || { echo "API health check failed. Check docker compose logs." >&2; exit 1; }
-curl -fsS --max-time 10 http://127.0.0.1:5173/ >/dev/null || { echo "React UI check failed." >&2; exit 1; }
-echo "Installed. On your laptop, SSH forward 5173 and 8080; then open http://127.0.0.1:5173."
+curl -kfsS --max-time 10 https://127.0.0.1:5173/ >/dev/null || { echo "React UI check failed." >&2; exit 1; }
+echo "Installed. On your laptop, SSH forward 5173 and 8080; then open https://127.0.0.1:5173."
 echo "Token is stored in the server's .env.private file. Do not disclose it."

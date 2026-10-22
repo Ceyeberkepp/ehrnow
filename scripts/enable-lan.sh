@@ -27,6 +27,7 @@ fi
 chmod 600 .env.private
 sed -i '/^EHR_WEB_BIND_IP=/d' .env.private
 printf 'EHR_WEB_BIND_IP=%s\n' "$ip" >> .env.private
+bash scripts/ensure-private-tls.sh "$ip"
 docker compose --env-file .env.private -f compose.private.yml up -d --no-deps --force-recreate web
-echo "Open EHRNow at http://$ip:5173 on the same private network."
+echo "Open EHRNow at https://$ip:5173 on the same private network."
 echo "Protect server access, never forward port 5173 to the Internet, and keep token private."

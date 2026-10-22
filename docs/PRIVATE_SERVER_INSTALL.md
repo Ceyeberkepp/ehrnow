@@ -46,7 +46,7 @@ From your own computer, use:
 ssh -N -L 5173:127.0.0.1:5173 -L 8080:127.0.0.1:8080 YOUR_USER@YOUR_SERVER_IP
 ```
 
-Open `http://127.0.0.1:5173` on your computer. The React app calls the API at `http://127.0.0.1:8080` through the same tunnel. Enter the developer token from `.env.private` on the server (never paste it into chat).
+Open `https://127.0.0.1:5173` on your computer. The React app calls the API at `http://127.0.0.1:8080` through the same tunnel. Enter the developer token from `.env.private` on the server (never paste it into chat).
 
 Compose only publishes React and Rust ports on the **server loopback interface**. PostgreSQL is accessible to containers on the dedicated Compose network, not host TCP. Do not configure router forwards, public reverse proxies, Cloudflare tunnels, or public access.
 
@@ -55,7 +55,7 @@ Compose only publishes React and Rust ports on the **server loopback interface**
 ```bash
 docker compose --env-file .env.private -f compose.private.yml ps
 curl -fsS http://127.0.0.1:8080/health
-curl -fsS http://127.0.0.1:5173/ >/dev/null
+curl -kfsS https://127.0.0.1:5173/ >/dev/null
 ```
 
 For errors:
@@ -77,4 +77,6 @@ Repository source confidentiality requires switching the currently public GitHub
 Adminer, a browser-based database manager similar to phpMyAdmin, is included as an optional Docker service. Run `bash scripts/db-admin.sh start`, then create an SSH tunnel forwarding local port 18080 to server localhost 18080 and open `http://127.0.0.1:18080`. See [Database Web GUI](DATABASE_WEB_GUI.md). Run `bash scripts/db-admin.sh stop` after use. Never expose it publicly.
 
 ## Direct private IP access without SSH tunneling (opt in)
-After `bash scripts/install-private.sh` succeeds, inspect your server's address using `hostname -I`. Enable direct access with `bash scripts/enable-lan.sh PRIVATE_SERVER_IP`. Open `http://PRIVATE_SERVER_IP:5173` from a device on that same trusted network. The frontend proxies `/api` and `/dev` internally to the Rust API, so port 8080 stays bound to server localhost and PostgreSQL has no published TCP port. Restrict TCP/5173 to your own device with firewall/router rules. A shared development bearer token is not sufficient authentication for exposure to untrusted LAN users; never port-forward this service or use PHI.
+After `bash scripts/install-private.sh` succeeds, inspect your server's address using `hostname -I`. Enable direct access with `bash scripts/enable-lan.sh PRIVATE_SERVER_IP`. Open `https://PRIVATE_SERVER_IP:5173` from a device on that same trusted network. The frontend proxies `/api` and `/dev` internally to the Rust API, so port 8080 stays bound to server localhost and PostgreSQL has no published TCP port. Restrict TCP/5173 to your own device with firewall/router rules. A shared development bearer token is not sufficient authentication for exposure to untrusted LAN users; never port-forward this service or use PHI.
+
+HTTPS uses an automatically generated, self-signed development certificate containing the server's private IP as a SAN. It encrypts connections, but browsers will show a trust warning until the certificate is explicitly trusted. For trusted HTTPS without a warning, use a domain and a certificate from a trusted CA. Never share the private key or expose this development server publicly.
