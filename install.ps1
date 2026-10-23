@@ -7,8 +7,15 @@ if ($LASTEXITCODE -ne 0) { throw 'Docker is not running.' }
 docker compose version *> $null
 if ($LASTEXITCODE -ne 0) { throw 'Docker Compose is unavailable.' }
 if (-not (Test-Path -LiteralPath '.env.installer')) {
-    $token = [Convert]::ToHexString([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32)).ToLowerInvariant()
-    $password = [Convert]::ToHexString([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(24)).ToLowerInvariant()
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $tokenBytes = New-Object byte[] 32
+        $passwordBytes = New-Object byte[] 24
+        $rng.GetBytes($tokenBytes)
+        $rng.GetBytes($passwordBytes)
+        $token = ([BitConverter]::ToString($tokenBytes) -replace '-', '').ToLowerInvariant()
+        $password = ([BitConverter]::ToString($passwordBytes) -replace '-', '').ToLowerInvariant()
+    } finally { $rng.Dispose() }
     $contents = "EHR_DEV_TOKEN=$token`nEHR_DB_PASSWORD=$password`n"
     [System.IO.File]::WriteAllText((Join-Path $PSScriptRoot '.env.installer'), $contents, [System.Text.UTF8Encoding]::new($false))
     Write-Host 'Generated local credentials in .env.installer.'
