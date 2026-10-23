@@ -10,9 +10,9 @@ echo "WARNING: fictional test data only. NOT safe for clinical use or PHI."
 export DEBIAN_FRONTEND=noninteractive
 if command -v apt-get >/dev/null 2>&1; then
   apt-get update
-  apt-get install -y ca-certificates curl git openssl
+  apt-get install -y ca-certificates curl git openssl iproute2
 elif command -v dnf >/dev/null 2>&1; then
-  dnf install -y ca-certificates curl git openssl
+  dnf install -y ca-certificates curl git openssl iproute
 else
   echo "Supported installers: Debian/Ubuntu apt or RHEL/Fedora-family dnf." >&2
   exit 1

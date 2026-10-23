@@ -15,6 +15,7 @@ if [[ ! -f .env.installer ]]; then
   (umask 077; printf 'EHR_DEV_TOKEN=%s\nEHR_DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" "$(openssl rand -hex 24)" > .env.installer)
   echo 'Created private .env.installer credentials.'
 fi
+chmod 600 .env.installer
 if ! grep -q '^EHR_SETUP_KEY=' .env.installer; then
   (umask 077; printf 'EHR_SETUP_KEY=%s\n' "$(openssl rand -hex 32)" >> .env.installer)
 fi
@@ -39,6 +40,11 @@ else
   echo "Unable to detect container IP; use ip -4 addr to locate it."
 fi
 echo 'First administrator setup key is stored in /opt/ehrnow/.env.installer (keep private).'
+if ! curl --fail --silent --show-error --max-time 15 http://127.0.0.1:5173/auth/status >/dev/null; then
+  echo 'EHRNow web/auth health check failed. Check: docker compose --env-file .env.installer -f compose.installer.yaml logs --tail=100' >&2
+  exit 1
+fi
+echo 'Web and authentication proxy reachable locally.'
 echo 'WARNING: HTTP is unencrypted. Development only; never use with real patient records.'
 echo 'Development token is saved in .env.installer (keep this file private).'
 echo 'Only fictional data; do NOT use for patient care or expose to the internet.'

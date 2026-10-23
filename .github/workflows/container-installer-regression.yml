@@ -1,0 +1,38 @@
+name: Container installer regression checks
+on:
+  pull_request:
+    paths:
+      - 'bootstrap-container.sh'
+      - 'bootstrap-entry.sh'
+      - 'install.sh'
+      - 'compose.installer.yaml'
+      - 'apps/clinician-web/vite.config.ts'
+      - '.github/workflows/container-installer-regression.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'bootstrap-container.sh'
+      - 'bootstrap-entry.sh'
+      - 'install.sh'
+      - 'compose.installer.yaml'
+      - 'apps/clinician-web/vite.config.ts'
+      - '.github/workflows/container-installer-regression.yml'
+jobs:
+  debian13-dependency-check:
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax and Debian 13 package availability
+        run: |
+          apt-get update
+          apt-get install -y bash ca-certificates curl iproute2
+          bash -n bootstrap-container.sh
+          bash -n install.sh
+          sh -n bootstrap-entry.sh
+          apt-cache show docker-compose >/dev/null
+          grep -Fq '/auth' apps/clinician-web/vite.config.ts
+          grep -Fq 'EHR_SETUP_KEY:' compose.installer.yaml
+          grep -Fq 'EHR_WEB_BIND_IP' compose.installer.yaml
+          grep -Fq 'ip -4 route show default' install.sh
+          grep -Fq 'chmod 600 .env.installer' install.sh
