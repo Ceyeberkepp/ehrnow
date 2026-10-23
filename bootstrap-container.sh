@@ -74,7 +74,12 @@ fi
 if [[ ! -d "$dest/.git" ]]; then
   git clone --depth=1 https://github.com/Ceyeberkepp/ehrnow.git "$dest"
 else
-  echo "Using existing checkout at $dest (no automatic destructive changes)."
+  echo "Checking for repository updates..."
+  if [[ -z "$(git -C "$dest" status --porcelain)" ]]; then
+    git -C "$dest" pull --ff-only origin main
+  else
+    echo "Local modifications detected; preserving them and skipping update." >&2
+  fi
 fi
 cd "$dest"
 bash ./install.sh

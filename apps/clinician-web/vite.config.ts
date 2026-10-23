@@ -6,7 +6,8 @@ export default defineConfig({
   strictPort:true,
   proxy:{
    '/api':{target:'http://api:8080',changeOrigin:false},
-   '/dev':{target:'http://api:8080',changeOrigin:false}
+   '/dev':{target:'http://api:8080',changeOrigin:false},
+   '/auth':{target:'http://api:8080',changeOrigin:false}
   }
  }
 });
