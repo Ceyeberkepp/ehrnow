@@ -15,8 +15,12 @@ if [[ ! -f .env.installer ]]; then
   (umask 077; printf 'EHR_DEV_TOKEN=%s\nEHR_DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" "$(openssl rand -hex 24)" > .env.installer)
   echo 'Created private .env.installer credentials.'
 fi
+if ! grep -q '^EHR_WEB_BIND_IP=' .env.installer; then
+  printf 'EHR_WEB_BIND_IP=0.0.0.0\n' >> .env.installer
+fi
 docker compose --env-file .env.installer -f compose.installer.yaml up -d --build --wait
 echo ''
-echo 'Open http://127.0.0.1:5173'
+echo "Open http://$(hostname -I | awk '{print $1}'):5173 from a trusted LAN device"
+echo 'WARNING: HTTP is unencrypted. Development only; never use with real patient records.'
 echo 'Development token is saved in .env.installer (keep this file private).'
 echo 'Only fictional data; do NOT use for patient care or expose to the internet.'
