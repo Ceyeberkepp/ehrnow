@@ -15,12 +15,22 @@ if [[ ! -f .env.installer ]]; then
   (umask 077; printf 'EHR_DEV_TOKEN=%s\nEHR_DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" "$(openssl rand -hex 24)" > .env.installer)
   echo 'Created private .env.installer credentials.'
 fi
+if ! grep -q '^EHR_SETUP_KEY=' .env.installer; then
+  (umask 077; printf 'EHR_SETUP_KEY=%s\n' "$(openssl rand -hex 32)" >> .env.installer)
+fi
 if ! grep -q '^EHR_WEB_BIND_IP=' .env.installer; then
   printf 'EHR_WEB_BIND_IP=0.0.0.0\n' >> .env.installer
 fi
 docker compose --env-file .env.installer -f compose.installer.yaml up -d --build --wait
 echo ''
-echo "Open http://$(hostname -I | awk '{print $1}'):5173 from a trusted LAN device"
+ip=$(ip -4 -o addr show scope global 2>/dev/null | awk '$2 !~ /^(docker|br-|veth|virbr)/ {split($4,a,"/"); print a[1]; exit}')
+if [[ -z "$ip" ]]; then ip=$(hostname -I 2>/dev/null | awk '{print $1}'); fi
+if [[ -n "$ip" ]]; then
+  echo "Open http://${ip}:5173 from a trusted LAN device"
+else
+  echo "Unable to detect container IP; use ip -4 addr to locate it."
+fi
+echo 'First administrator setup key is stored in /opt/ehrnow/.env.installer (keep private).'
 echo 'WARNING: HTTP is unencrypted. Development only; never use with real patient records.'
 echo 'Development token is saved in .env.installer (keep this file private).'
 echo 'Only fictional data; do NOT use for patient care or expose to the internet.'
