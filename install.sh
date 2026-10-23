@@ -23,8 +23,16 @@ if ! grep -q '^EHR_WEB_BIND_IP=' .env.installer; then
 fi
 docker compose --env-file .env.installer -f compose.installer.yaml up -d --build --wait
 echo ''
-ip=$(ip -4 -o addr show scope global 2>/dev/null | awk '$2 !~ /^(docker|br-|veth|virbr)/ {split($4,a,"/"); print a[1]; exit}')
-if [[ -z "$ip" ]]; then ip=$(hostname -I 2>/dev/null | awk '{print $1}'); fi
+# Prefer the IPv4 address used by the container's default network route.
+# Never report internal Docker bridges as the LAN address.
+iface=$(ip -4 route show default 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev") {print $(i+1); exit}}')
+ip=""
+if [[ -n "$iface" && ! "$iface" =~ ^(docker|br-|veth|virbr|lo) ]]; then
+  ip=$(ip -4 -o addr show dev "$iface" scope global 2>/dev/null | awk 'NR==1 {split($4,a,"/"); print a[1]}')
+fi
+if [[ -z "$ip" ]]; then
+  ip=$(ip -4 -o addr show scope global 2>/dev/null | awk '$2 !~ /^(docker|br-|veth|virbr|lo)/ {split($4,a,"/"); print a[1]; exit}')
+fi
 if [[ -n "$ip" ]]; then
   echo "Open http://${ip}:5173 from a trusted LAN device"
 else
