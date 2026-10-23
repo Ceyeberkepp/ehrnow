@@ -1,0 +1,16 @@
+name: Container installer syntax
+on:
+  pull_request:
+    paths:
+      - bootstrap-container.sh
+      - .github/workflows/container-bootstrap-check.yml
+  push:
+    paths:
+      - bootstrap-container.sh
+      - .github/workflows/container-bootstrap-check.yml
+jobs:
+  shell-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash -n bootstrap-container.sh
