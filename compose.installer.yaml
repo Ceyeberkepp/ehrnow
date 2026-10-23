@@ -21,6 +21,7 @@ services:
     environment:
       EHR_DEV_MODE: "1"
       EHR_DEV_TOKEN: ${EHR_DEV_TOKEN:?Run installer first}
+      EHR_SETUP_KEY: ${EHR_SETUP_KEY:?Run installer first}
       DATABASE_URL: postgres://ehrdev:${EHR_DB_PASSWORD}@postgres:5432/ehrnow
       EHR_BIND_ADDR: 0.0.0.0:8080
     depends_on:
