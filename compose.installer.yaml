@@ -1,0 +1,52 @@
+# Local synthetic-data development stack only. Not suitable for clinical production.
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ehrdev
+      POSTGRES_PASSWORD: ${EHR_DB_PASSWORD:?Run the installer to generate credentials}
+      POSTGRES_DB: ehrnow
+    volumes:
+      - ehrnow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ehrdev -d ehrnow"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks: [ehrnow_internal]
+  api:
+    build:
+      context: ./backend/rust/clinical-api
+      dockerfile: Dockerfile
+    environment:
+      EHR_DEV_MODE: "1"
+      EHR_DEV_TOKEN: ${EHR_DEV_TOKEN:?Run installer first}
+      DATABASE_URL: postgres://ehrdev:${EHR_DB_PASSWORD}@postgres:5432/ehrnow
+      EHR_BIND_ADDR: 0.0.0.0:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [ehrnow_internal]
+    restart: unless-stopped
+  operations:
+    build:
+      context: ./backend/go/operations
+      dockerfile: Dockerfile
+    environment:
+      EHR_DEV_MODE: "1"
+    networks: [ehrnow_internal]
+    restart: unless-stopped
+  web:
+    build:
+      context: ./apps/clinician-web
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on: [api]
+    networks: [ehrnow_internal]
+    restart: unless-stopped
+volumes:
+  ehrnow_pgdata:
+networks:
+  ehrnow_internal:
+    driver: bridge
