@@ -26,11 +26,18 @@ if ! command -v docker >/dev/null 2>&1 || ! docker compose version >/dev/null 2>
           echo "Distribution docker.io package unavailable. Install a supported Docker Engine package." >&2
           exit 1
         }
-        if ! apt-get install -y docker-compose-v2; then
-          apt-get install -y docker-compose-plugin || {
-            echo "Compose v2 missing in distro repositories. Set up the official Docker APT repository, then rerun." >&2
+        if ! docker compose version >/dev/null 2>&1; then
+          if apt-cache show docker-compose >/dev/null 2>&1; then
+            apt-get install -y docker-compose
+          elif apt-cache show docker-compose-v2 >/dev/null 2>&1; then
+            apt-get install -y docker-compose-v2
+          elif apt-cache show docker-compose-plugin >/dev/null 2>&1; then
+            apt-get install -y docker-compose-plugin
+          else
+            echo "Docker Compose v2 not available from configured distribution repositories." >&2
+            echo "Configure the official Docker repository and rerun this installer." >&2
             exit 1
-          }
+          fi
         fi
         ;;
       *)
